@@ -25,7 +25,7 @@ public class WordList : MonoBehaviour {
 		S = this; 
 	}
 
-	void Start() {
+	public void Init() { //this line replaces Void Start() 
 		//split the text of wordListText on line feeds, which creates a large
 		//populated string[] with all the words from the list
 		lines = wordListText.text.Split ('\n');
@@ -72,6 +72,9 @@ public class WordList : MonoBehaviour {
 				//here while other code executes and then continue from this point
 			}
 		}
+
+		//send a message to this gameObject to let it know the parse is done
+		gameObject.SendMessage ("WordListParseComplete");
 	}
 
 	//these methods allow other classes to access the private List<string>
