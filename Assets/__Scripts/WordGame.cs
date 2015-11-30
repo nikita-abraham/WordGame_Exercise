@@ -14,10 +14,17 @@ public enum GameMode {
 public class WordGame : MonoBehaviour {
 	static public WordGame S;
 
+	public GameObject prefabLetter;
+	public Rect wordArea = new Rect (-24, 19, 48, 28);
+	public float letterSize = 1.5f;
+	public bool showAllWyrds = true;
+	public float bigLetterSize = 4f;
+
 	public bool ____________;
 
 	public GameMode mode = GameMode.preGame;
 	public WordLevel currLevel;
+	public List<Wyrd> wyrds;
 
 	void Awake() {
 		S = this;
@@ -96,6 +103,59 @@ public class WordGame : MonoBehaviour {
 
 	public void SubWordSearchComplete() {
 		mode = GameMode.levelPrep;
+		Layout (); //call the Layout() function after SubWordSearchComplete
+	}
+
+	void Layout() {
+		//place the letters for each subword of currLevel on screen
+		wyrds = new List<Wyrd> ();
+
+		//declare a lot of variables that will be used in this method
+		GameObject go;
+		Letter lett;
+		string word;
+		Vector3 pos;
+		float left = 0;
+		float columnWidth = 3;
+		char c;
+		Color col;
+		Wyrd wyrd;
+
+		//determine how many rows of letters will fit on screen
+		int numRows = Mathf.RoundToInt (wordArea.height / letterSize);
+
+		//make a Wyrd of each level.subWord
+		for (int i=0; i<currLevel.subWords.Count; i++) {
+			wyrd = new Wyrd ();
+			word = currLevel.subWords [i];
+
+			//if the word is longer than columnWidth, expand it
+			columnWidth = Mathf.Max (columnWidth, word.Length);
+
+			//instantiate a prefabLetter for each letter of the word
+			for (int j=0; j<word.Length; j++) {
+				c = word [j]; //grab the jth char of the word
+				go = Instantiate (prefabLetter) as GameObject;
+				lett = go.GetComponent<Letter> ();
+				lett.c = c; //set the c of the Letter
+				//position the Letter
+				pos = new Vector3 (wordArea.x + left + j * letterSize, wordArea.y, 0);
+				//the modulus here makes multiple columns line up
+				pos.y -= (i % numRows) * letterSize;
+				lett.pos = pos;
+				go.transform.localScale = Vector3.one * letterSize;
+				wyrd.Add (lett);
+			}
+
+			if (showAllWyrds)
+				wyrd.visible = true; //this line is for testing
+			wyrds.Add (wyrd);
+
+			//if we've gotten to the numRows(th) row, start a new column
+			if (i % numRows == numRows - 1) {
+				left += (columnWidth + 0.5f) * letterSize;
+			}
+		}
 	}
 	
 }
