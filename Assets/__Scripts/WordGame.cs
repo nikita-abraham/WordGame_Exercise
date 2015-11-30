@@ -25,6 +25,7 @@ public class WordGame : MonoBehaviour {
 	public List<float> scoreFontSizes = new List<float> {24, 36, 36, 1};
 	public Vector3 scoreMidPoint = new Vector3(1,1,0);
 	public float scoreComboDelay = 0.5f;
+	public Color[] wyrdPalette;
 	
 	public bool ____________;
 
@@ -152,13 +153,24 @@ public class WordGame : MonoBehaviour {
 				pos = new Vector3 (wordArea.x + left + j * letterSize, wordArea.y, 0);
 				//the modulus here makes multiple columns line up
 				pos.y -= (i % numRows) * letterSize;
+
+				//move the lett immediately to a position above the screen
+				lett.position = pos+Vector3.up*(20+i%numRows);
+				//then set the pos for it to interpolate to 
 				lett.pos = pos;
+				//increment lett.timeStart to move wyrds at different times
+				lett.timeStart = Time.time + i*0.05f;
+				
 				go.transform.localScale = Vector3.one * letterSize;
 				wyrd.Add (lett);
 			}
 
 			if (showAllWyrds)
 				wyrd.visible = true; //this line is for testing
+
+			//color the wyrd based on length
+			wyrd.color = wyrdPalette[word.Length-WordList.S.wordLengthMin];
+
 			wyrds.Add (wyrd);
 
 			//if we've gotten to the numRows(th) row, start a new column
@@ -184,6 +196,12 @@ public class WordGame : MonoBehaviour {
 			//set the initial position of the big letters below screen
 			pos = new Vector3 (0, -100, 0);
 			lett.pos = pos;
+
+			//added in, to ease up from the bottom of the screen
+			lett.position = pos+Vector3.up*(20+i%numRows);
+			//increment lett.timestart to have big letters come in last
+			lett.timeStart = Time.time + currLevel.subWords.Count*0.05f;
+			lett.easingCurve = Easing.Sin+"-0.18"; //bouncy easing 
 
 			col = bigColorDim;
 			lett.color = col;
