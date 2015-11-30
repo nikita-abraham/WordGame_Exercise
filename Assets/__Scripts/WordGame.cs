@@ -22,6 +22,9 @@ public class WordGame : MonoBehaviour {
 	public Color bigColorDim = new Color (0.8f, 0.8f, 0.8f);
 	public Color bigColorSelected = Color.white;
 	public Vector3 bigLetterCenter = new Vector3(0, -16, 0);
+	public List<float> scoreFontSizes = new List<float> {24, 36, 36, 1};
+	public Vector3 scoreMidPoint = new Vector3(1,1,0);
+	public float scoreComboDelay = 0.5f;
 	
 	public bool ____________;
 
@@ -278,7 +281,7 @@ public class WordGame : MonoBehaviour {
 
 				if (c == '\n' || c == '\r') { //return/enter
 					//test the testWord against the words in WordLevel
-					CheckWord ();
+					StartCoroutine( CheckWord () );
 				}
 
 				if (c == ' ') { //space
@@ -308,7 +311,7 @@ public class WordGame : MonoBehaviour {
 		return(null);
 	}
 
-	public void CheckWord() {
+	public IEnumerator CheckWord() {
 		//test testWord against the level.subWords
 		string subWord;
 		bool foundTestWord = false;
@@ -333,6 +336,7 @@ public class WordGame : MonoBehaviour {
 			if(string.Equals (testWord, subWord)) {
 				//then highlight the subWord
 				HighlightWyrd(i);
+				Score(wyrds[i], 1); //score the testWord
 				foundTestWord = true;
 			} else if (testWord.Contains(subWord)) {
 				containedWords.Add(i);
@@ -346,8 +350,11 @@ public class WordGame : MonoBehaviour {
 			int ndx;
 			//highlight the words in reverse order
 			for (int i=0; i<containedWords.Count; i++) {
+				//yield for a bit before hghlighting each word
+				yield return(new WaitForSeconds(scoreComboDelay));
 				ndx = numContained-i-1; 
 				HighlightWyrd(containedWords[ndx]);
+				Score(wyrds[containedWords[ndx]], i+2); //score other words
 			}
 		}
 
@@ -374,5 +381,47 @@ public class WordGame : MonoBehaviour {
 		bigLettersActive.Clear ();
 		ArrangeBigLetters ();
 	}
+
+
+	//add the score for ths word
+	//int combo is the number of this word in a combo
+	void Score(Wyrd wyrd, int combo) {
+		//get the position of the first letter in the wyrd
+		Vector3 pt = wyrd.letters [0].transform.position;
+		//create a List<> of Bezier points for the FloatingScore
+		List<Vector3> pts = new List<Vector3> ();
+
+		//convert the pt to a ViewportPoint. ViewportPoints range from 0 to 1
+		//across the screen and are used for GUI coordinates
+		pt = Camera.main.WorldToViewportPoint (pt);
+		pt.z = 0;
+
+		//make pt the first Bezier point
+		pts.Add (pt);
+
+		//add a second Bezier point
+		pts.Add (scoreMidPoint);
+
+		//make the Scoreboard the last Bezier point
+		pts.Add (Scoreboard.S.transform.position);
+
+		//set the value of the floating score
+		int value = wyrd.letters.Count * combo;
+		FloatingScore fs = Scoreboard.S.CreateFloatingScore (value, pts);
+
+		fs.timeDuration = 2f;
+		fs.fontSizes = scoreFontSizes;
+
+		//double the InOut Easing Effect
+		fs.easingCurve = Easing.InOut + Easing.InOut;
+
+		//make the text of the FloatingScore something like "3x2"
+		string txt = wyrd.letters.Count.ToString ();
+		if (combo > 1) {
+			txt += "x" + combo;
+		}
+		fs.guiText.text = txt;
+	}
+	
 }
 	
